@@ -35,7 +35,7 @@ plotly.plot(initdata, initlayout, function (err, msg) {
 
     sp.on('data', function(input) {
         if(isNaN(input) || input > 1023) return;
-
+            
     var streamObject = JSON.stringify({ x : getDateString(), y : input });
     console.log(streamObject);
     stream.write(streamObject+'\n');

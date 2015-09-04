@@ -21,23 +21,36 @@ function getDateString() {
     return datestr;
 }
 
-var initdata = [{x:[], y:[], stream:{token:token, maxpoints: 1500}}];
-var initlayout = {fileopt : "new", filename : "sensor-test"};
+var initdata = [    
+                    {name: "Temperature", x:[], y:[], stream:{token:tokens[0], maxpoints: 1500}}, 
+                    {name: "Humidity", x:[], y:[], stream:{token:tokens[1], maxpoints: 1500}}
+                ];
+
+var initlayout = {fileopt : "new", filename : "Live Streaming Temperature and Humidity"};
 
 plotly.plot(initdata, initlayout, function (err, msg) {
     if (err)
         return console.log(err)
 
     console.log(msg);
-    var stream = plotly.stream(token, function (err, res) {
-        console.log(err, res);
-    });
+
+    var streams = { 
+        "temperature" : plotly.stream(tokens[0], function (err, res) {
+            if (err) console.log(err);
+            console.log(err, res);
+        }), 
+        "humidity" : plotly.stream(tokens[1], function (err, res) {
+            if (err) console.log(err);
+            console.log(err, res);
+        }) 
+
+/// TODO:  change the streamObject to read sensor data into two streams
 
     sp.on('data', function(input) {
         if(isNaN(input) || input > 1023) return;
 
-    var streamObject = JSON.stringify({ x : getDateString(), y : input });
-    console.log(streamObject);
-    stream.write(streamObject+'\n');
+        var streamObject = JSON.stringify({ x : getDateString(), y : input });
+        console.log(streamObject);
+        stream.write(streamObject+'\n');
     });
 });
