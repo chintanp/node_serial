@@ -6,9 +6,9 @@
 var com = require("serialport");
 
 
-var serialPort = new com.SerialPort("COM4", {
-    baudrate: 115200,
-    parser: com.parsers.readline('\r')
+var serialPort = new com.SerialPort("COM5", {
+    baudrate: 9600,
+    parser: com.parsers.readline('\n')
   });
 
 serialPort.on('open',function() {

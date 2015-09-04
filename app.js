@@ -18,25 +18,29 @@ var express = require('express'),
 var config = require('./config.json')
     , username = config['user']
     , apiKey = config['apiKey']
-    , token = config['token']
-    , Plotly = require('../.')(username, apiKey)
+    , tokens = config.tokens
+    , Plotly = require('plotly')(username, apiKey)
     , Signal = require('random-signal');
 
-var data = {
-    'x':[]   // empty arrays since we will be streaming our data to into these arrays
-    , 'y':[]
-    , 'type':'scatter'
-    , 'mode':'lines+markers'
-    , marker: {
-        color: "rgba(31, 119, 180, 0.96)"
-    }
-    , line: {
-        color:"rgba(31, 119, 180, 0.31)"
-    }
-    , stream: {
-        "token": token
-        , "maxpoints": 100
-    }
+var data = [0,1].map(initTrace);
+
+function initTrace(i) {
+    return {
+        'x': []   // empty arrays since we will be streaming our data to into these arrays
+        , 'y': []
+        , 'type': 'scatter'
+        , 'mode': 'lines+markers'
+        , marker: {
+            color: "rgba(31, 119, 180, 0.96)"
+        }
+        , line: {
+            color: "rgba(31, 119, 180, 0.31)"
+        }
+        , stream: {
+            "token": tokens[i]
+            , "maxpoints": 100
+        }
+    };
 }
 
 // build your layout and file options
@@ -88,9 +92,9 @@ app.get('*', routes.index);
 //------------------New Code -----------------//
 
 var com = require("serialport");
-var serialPort = new com.SerialPort("COM4", {
+var serialPort = new com.SerialPort("COM5", {
     baudrate: 9600,
-    parser: com.parsers.readline('\r')
+    parser: com.parsers.readline('\n')
 });
 
 
@@ -98,38 +102,40 @@ var serialPort = new com.SerialPort("COM4", {
 io.on('connection', function(http_socket) {
 
     console.log("Socket connected");
-    serialPort.on('open',function() {
+    serialPort.on('open', function () {
         console.log('Port open');
 
     });
 
-    serialPort.on('data', function(data) {
+    serialPort.on('data', function (serial_data) {
 
-        console.log(data);
+        console.log(serial_data);
 
         Plotly.plot(data, graphOptions, function (err, resp) {
             if (err) return console.log("ERROR", err)
 
             console.log(resp)
 
-            var plotlystream = Plotly.stream(token, function () {})
-            var signalstream = Signal({tdelta: 100}) //
+                [0, 1].forEach(function (i) {
+                    var plotlystream = Plotly.stream(tokens[i], function () {});
+
+                    var signalstream = Signal({tdelta: 100}); //
 
 
-            plotlystream.on("error", function (err) {
-                signalstream.destroy()
-            })
+                    plotlystream.on("error", function (err) {
+                        signalstream.destroy()
+                    })
 
-            // Okay - stream to our plot!
-            signalstream.pipe(plotlystream)
-        })
+                    // Okay - stream to our plot!
+                    signalstream.pipe(plotlystream)
+                });
 
-        http_socket.emit('old_data', { livedata : data } );
+            http_socket.emit('old_data', {livedata: data});
+        });
+
+
+        //http_socket.on('i am client', console.log);
     });
-
-
-
-    //http_socket.on('i am client', console.log);
 });
 
 // Start server
