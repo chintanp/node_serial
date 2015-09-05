@@ -11,4 +11,7 @@ var sp = new serialport.SerialPort(portName, {
 
 sp.on('data', function(input) {
     console.log(input);
+    values = input.split('\t')
+    console.log("temperature: " + values[0]);
+    console.log("humidity: " + values[1]);
 });

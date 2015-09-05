@@ -1,6 +1,6 @@
 var serialport = require('serialport'),
     plotly = require('plotly')('chintanp','vu32637k4y'),
-    tokens = ['xg5vkjdoct', 'qsc0j3pqks';
+    tokens = ['xg5vkjdoct', 'qsc0j3pqks'];
 
 var portName = 'COM5';
 var sp = new serialport.SerialPort(portName,{
@@ -43,14 +43,27 @@ plotly.plot(initdata, initlayout, function (err, msg) {
             if (err) console.log(err);
             console.log(err, res);
         }) 
+    };
 
 /// TODO:  change the streamObject to read sensor data into two streams
 
     sp.on('data', function(input) {
         if(isNaN(input) || input > 1023) return;
 
-        var streamObject = JSON.stringify({ x : getDateString(), y : input });
-        console.log(streamObject);
-        stream.write(streamObject+'\n');
+        var values = input.split('\t');
+
+        // writing the temperature stream
+        var tempStreamObject = JSON.stringify({ x : getDateString(), y : values[0] });
+        
+        console.log("temperatureObject: " + tempStreamObject);
+
+        streams["temperature"].write(tempStreamObject + '\n');
+
+        // writing the humidiity stream
+        var humStreamObject = JSON.stringify({ x : getDateString(), y : values[1] });
+        
+        console.log("humidityObject: " + humStreamObject);
+
+        streams["humidity"].write(humStreamObject + '\n');
     });
 });
