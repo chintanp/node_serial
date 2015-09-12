@@ -7,7 +7,7 @@
 var filePath = __dirname.replace('routes', 'views/')
 
 exports.index = function(req, res) {
-	res.sendfile(filePath + 'index.html');
+	res.sendfile(filePath + 'index_canvasjs.html');
 };
 
 exports.partials = function (req, res) {
